@@ -1,4 +1,4 @@
-name: Run Tests
+name: Tests
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
+    
     services:
       postgres:
         image: postgres:16
@@ -26,44 +26,36 @@ jobs:
           --health-retries 5
 
     steps:
-
     - name: Checkout code
       uses: actions/checkout@v4
-
+    
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
-
+    
+    - name: Create .env file
+      run: |
+        echo "DJANGO_SECRET_KEY=test-secret-key" > .env
+        echo "DJANGO_DEBUG=True" >> .env
+        echo "POSTGRES_DB=test_db" >> .env
+        echo "POSTGRES_USER=test_user" >> .env
+        echo "POSTGRES_PASSWORD=test_password" >> .env
+        echo "POSTGRES_HOST=localhost" >> .env
+        echo "POSTGRES_PORT=5432" >> .env
+        echo "TASK_VERSION=3" >> .env
+        echo "ALLOWED_HOSTS=localhost,127.0.0.1" >> .env
+    
+    - name: Verify .env file
+      run: cat .env
+    
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-
+    
     - name: Run migrations
-      env:
-        DJANGO_SECRET_KEY: test-secret-key-for-ci
-        DJANGO_DEBUG: "True"
-        POSTGRES_DB: test_db
-        POSTGRES_USER: test_user
-        POSTGRES_PASSWORD: test_password
-        POSTGRES_HOST: localhost
-        POSTGRES_PORT: 5432
-        ALLOWED_HOSTS: localhost,127.0.0.1
-        TASK_VERSION: 3
-      run: |
-        python manage.py migrate
-
+      run: python manage.py migrate
+    
     - name: Run tests
-      env:
-        DJANGO_SECRET_KEY: test-secret-key-for-ci
-        DJANGO_DEBUG: "True"
-        POSTGRES_DB: test_db
-        POSTGRES_USER: test_user
-        POSTGRES_PASSWORD: test_password
-        POSTGRES_HOST: localhost
-        POSTGRES_PORT: 5432
-        ALLOWED_HOSTS: localhost,127.0.0.1
-        TASK_VERSION: 3
-      run: |
-        python manage.py test apps.users apps.projects --verbosity=2
+      run: python manage.py test apps.users apps.projects --verbosity=2
