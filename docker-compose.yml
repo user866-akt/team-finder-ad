@@ -20,6 +20,7 @@ services:
     container_name: teamfinder_web
     command: >
       sh -c "python manage.py migrate &&
+             python manage.py create_test_data &&
              python manage.py collectstatic --noinput &&
              gunicorn team_finder.wsgi:application --bind 0.0.0.0:8000 --workers 3"
     volumes:
