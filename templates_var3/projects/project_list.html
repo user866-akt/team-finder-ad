@@ -13,7 +13,7 @@
     <div class="project-header">
         <h2 class="project-title">Актуальные проекты</h2>
         {% if projects %}
-            <a href="/projects/create-project" class="black-button">+ Создать проект</a>
+            <a href="{% url 'projects:project_create' %}" class="black-button">+ Создать проект</a>
         {% endif %}
     </div>
     <p class="project-subtitle">Найдите интересный проект и присоединитесь к команде</p>
@@ -28,7 +28,7 @@
             </a>
             {% endfor %}
             {% if active_skill %}
-            <a href="/projects/list" class="filter-reset">Сбросить</a>
+            <a href="{% url 'projects:project_list' %}" class="filter-reset">Сбросить</a>
             {% endif %}
         </div>
     </div>

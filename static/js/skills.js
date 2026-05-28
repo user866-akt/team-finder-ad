@@ -154,17 +154,22 @@
     }
 
     function appendChip(id, name) {
-      if (container.querySelector(`.skill-chip[data-id="${id}"]`)) return;
+        if (!id) {
+            console.error('appendChip: id is undefined');
+            return;
+        }
+        
+        if (container.querySelector(`.skill-chip[data-id="${id}"]`)) return;
 
-      const chip = document.createElement("span");
-      chip.className = "skill-chip";
-      chip.dataset.id = id;
-      chip.innerHTML = `${name} <button type="button" class="remove-skill-btn" aria-label="Удалить" title="Удалить">×</button>`;
+        const chip = document.createElement("span");
+        chip.className = "skill-chip";
+        chip.dataset.id = id;
+        chip.innerHTML = `${name} <button type="button" class="remove-skill-btn" aria-label="Удалить" title="Удалить">×</button>`;
 
-      container.insertBefore(chip, addBtn);
+        container.insertBefore(chip, addBtn);
 
-      const empty = container.querySelector(".skill-empty");
-      if (empty) empty.remove();
+        const empty = container.querySelector(".skill-empty");
+        if (empty) empty.remove();
     }
 
     function getCookie(name) {

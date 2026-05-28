@@ -1,15 +1,15 @@
 from pathlib import Path
-from decouple import config
+from decouple import Config, RepositoryEnv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# TODO: Создать и заполнить .env, ориентируясь на .env_example
+config = Config(RepositoryEnv(BASE_DIR / ".env"))
 
 SECRET_KEY = config("DJANGO_SECRET_KEY")
 
 DEBUG = config("DJANGO_DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1").split(",")
 
 
 # Application definition
@@ -21,6 +21,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "apps.users",
+    "apps.projects"
 ]
 
 MIDDLEWARE = [
@@ -107,6 +109,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = BASE_DIR / "staticfiles"
 # Media files
 
 MEDIA_URL = "/media/"
@@ -116,3 +119,10 @@ MEDIA_ROOT = BASE_DIR / "media"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+AUTH_USER_MODEL = 'users.User'
+
+# Перенаправление после логина
+LOGIN_URL = '/users/login/'
+LOGIN_REDIRECT_URL = '/projects/list/'
+LOGOUT_REDIRECT_URL = '/projects/list/'
