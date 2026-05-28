@@ -22,7 +22,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "apps.users",
-    "apps.projects"
+    "apps.projects",
 ]
 
 MIDDLEWARE = [
@@ -120,9 +120,9 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = "users.User"
 
 # Перенаправление после логина
-LOGIN_URL = '/users/login/'
-LOGIN_REDIRECT_URL = '/projects/list/'
-LOGOUT_REDIRECT_URL = '/projects/list/'
+LOGIN_URL = "/users/login/"
+LOGIN_REDIRECT_URL = "/projects/list/"
+LOGOUT_REDIRECT_URL = "/projects/list/"

@@ -5,10 +5,10 @@ from django.conf.urls.static import static
 from django.views.generic import RedirectView
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('users/', include('apps.users.urls', namespace='users')),
-    path('projects/', include('apps.projects.urls', namespace='projects')),
-    path('', RedirectView.as_view(url='/projects/list/')),
+    path("admin/", admin.site.urls),
+    path("users/", include("apps.users.urls", namespace="users")),
+    path("projects/", include("apps.projects.urls", namespace="projects")),
+    path("", RedirectView.as_view(url="/projects/list/")),
 ]
 
 if settings.DEBUG:

@@ -7,24 +7,39 @@ from .models import User
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    list_display = ('email', 'name', 'surname', 'is_active', 'is_staff', 'date_joined')
-    list_filter = ('is_active', 'is_staff', 'is_superuser', 'date_joined')
-    search_fields = ('email', 'name', 'surname')
-    ordering = ('-date_joined',)
-    readonly_fields = ('date_joined',)
-    
+    list_display = ("email", "name", "surname", "is_active", "is_staff", "date_joined")
+    list_filter = ("is_active", "is_staff", "is_superuser", "date_joined")
+    search_fields = ("email", "name", "surname")
+    ordering = ("-date_joined",)
+    readonly_fields = ("date_joined",)
+
     fieldsets = (
-        (None, {'fields': ('email', 'password')}),
-        (_('Личная информация'), {'fields': ('name', 'surname', 'avatar', 'phone', 'github_url', 'about')}),
-        (_('Разрешения'), {
-            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
-        }),
-        (_('Важные даты'), {'fields': ('last_login', 'date_joined')}),
+        (None, {"fields": ("email", "password")}),
+        (
+            _("Личная информация"),
+            {"fields": ("name", "surname", "avatar", "phone", "github_url", "about")},
+        ),
+        (
+            _("Разрешения"),
+            {
+                "fields": (
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "groups",
+                    "user_permissions",
+                ),
+            },
+        ),
+        (_("Важные даты"), {"fields": ("last_login", "date_joined")}),
     )
-    
+
     add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': ('email', 'name', 'surname', 'password1', 'password2'),
-        }),
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": ("email", "name", "surname", "password1", "password2"),
+            },
+        ),
     )
