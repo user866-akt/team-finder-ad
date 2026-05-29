@@ -9,6 +9,7 @@ from django.contrib import messages
 from .models import User
 from .forms import RegisterForm, LoginForm, UserEditForm, PasswordChangeForm
 
+USERS_PER_PAGE = 12
 
 class RegisterView(View):
     template_name = "users/register.html"
@@ -111,5 +112,5 @@ class PasswordChangeView(LoginRequiredMixin, UserPassesTestMixin, View):
 class UserListView(ListView):
     model = User
     template_name = "users/participants.html"
-    paginate_by = 12
+    paginate_by = USERS_PER_PAGE
     ordering = ["-date_joined"]

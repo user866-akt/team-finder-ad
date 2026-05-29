@@ -1,11 +1,26 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
+
+
+SKILL_NAME_MAX_LENGTH = 124
+
+PROJECT_NAME_MAX_LENGTH = 200
+PROJECT_GITHUB_URL_MAX_LENGTH = 200
+PROJECT_STATUS_MAX_LENGTH = 6
+
+PROJECT_STATUS_OPEN = "open"
+PROJECT_STATUS_CLOSED = "closed"
+
+PROJECT_STATUS_CHOICES = [
+    (PROJECT_STATUS_OPEN, "Открыт"),
+    (PROJECT_STATUS_CLOSED, "Закрыт"),
+]
 
 
 class Skill(models.Model):
     name = models.CharField(
         verbose_name="Название навыка",
-        max_length=124,
+        max_length=SKILL_NAME_MAX_LENGTH,
         unique=True,
         error_messages={
             "unique": "Навык с таким названием уже существует.",
@@ -22,25 +37,36 @@ class Skill(models.Model):
 
 
 class Project(models.Model):
-    STATUS_CHOICES = [
-        ("open", "Открыт"),
-        ("closed", "Закрыт"),
-    ]
-
-    name = models.CharField(verbose_name="Название проекта", max_length=200)
-    description = models.TextField(verbose_name="Описание проекта", blank=True, default="")
+    name = models.CharField(
+        verbose_name="Название проекта",
+        max_length=PROJECT_NAME_MAX_LENGTH,
+    )
+    description = models.TextField(
+        verbose_name="Описание проекта",
+        blank=True,
+        default="",
+    )
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="owned_projects",
         verbose_name="Автор проекта",
     )
-    created_at = models.DateTimeField(verbose_name="Дата создания", auto_now_add=True)
+    created_at = models.DateTimeField(
+        verbose_name="Дата создания",
+        auto_now_add=True,
+    )
     github_url = models.URLField(
-        verbose_name="Ссылка на GitHub", max_length=200, blank=True, default=""
+        verbose_name="Ссылка на GitHub",
+        max_length=PROJECT_GITHUB_URL_MAX_LENGTH,
+        blank=True,
+        default="",
     )
     status = models.CharField(
-        verbose_name="Статус", max_length=6, choices=STATUS_CHOICES, default="open"
+        verbose_name="Статус",
+        max_length=PROJECT_STATUS_MAX_LENGTH,
+        choices=PROJECT_STATUS_CHOICES,
+        default=PROJECT_STATUS_OPEN,
     )
     participants = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
@@ -49,7 +75,10 @@ class Project(models.Model):
         blank=True,
     )
     skills = models.ManyToManyField(
-        Skill, related_name="projects", verbose_name="Необходимые навыки", blank=True
+        Skill,
+        related_name="projects",
+        verbose_name="Необходимые навыки",
+        blank=True,
     )
 
     class Meta:
@@ -62,12 +91,11 @@ class Project(models.Model):
 
     @property
     def is_open(self):
-        return self.status == "open"
+        return self.status == PROJECT_STATUS_OPEN
 
     def toggle_participant(self, user):
         if self.participants.filter(id=user.id).exists():
             self.participants.remove(user)
             return False
-        else:
-            self.participants.add(user)
-            return True
+        self.participants.add(user)
+        return True

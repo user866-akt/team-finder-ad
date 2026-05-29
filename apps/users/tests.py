@@ -4,34 +4,66 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+TEST_EMAIL = "test@example.com"
+TEST_NAME = "Test"
+TEST_SURNAME = "User"
+TEST_PASSWORD = "testpass123"
+
+ADMIN_EMAIL = "admin@example.com"
+ADMIN_NAME = "Admin"
+ADMIN_SURNAME = "Adminov"
+ADMIN_PASSWORD = "adminpass123"
+
+USER_EMAIL = "user@example.com"
+USER_PASSWORD = "testpass123"
+OTHER_USER_EMAIL = "other@example.com"
+OTHER_USER_PASSWORD = "otherpass123"
+
+NEW_USER_EMAIL = "new@example.com"
+NEW_USER_PASSWORD = "newpass123"
+INVALID_EMAIL = "invalid-email"
+
+OLD_PASSWORD = "oldpass123"
+NEW_PASSWORD = "newpass456"
+WRONG_PASSWORD = "wrongpass"
+
+VALID_PHONE = "+79001234567"
+INVALID_PHONE = "12345"
+VALID_GITHUB_URL = "https://github.com/test"
+
+PHONE_ERROR_MESSAGE = (
+    "Номер телефона должен быть в формате +7XXXXXXXXXX или 8XXXXXXXXXX"
+    " (11 цифр после префикса)."
+)
+
 
 class UserModelTest(TestCase):
     def setUp(self):
         self.user_data = {
-            "email": "test@example.com",
-            "name": "Test",
-            "surname": "User",
-            "password": "testpass123",
+            "email": TEST_EMAIL,
+            "name": TEST_NAME,
+            "surname": TEST_SURNAME,
+            "password": TEST_PASSWORD,
         }
 
     def test_create_user(self):
         user = User.objects.create_user(**self.user_data)
 
-        self.assertEqual(user.email, "test@example.com")
-        self.assertEqual(user.name, "Test")
-        self.assertEqual(user.surname, "User")
+        self.assertEqual(user.email, TEST_EMAIL)
+        self.assertEqual(user.name, TEST_NAME)
+        self.assertEqual(user.surname, TEST_SURNAME)
         self.assertTrue(user.is_active)
         self.assertFalse(user.is_staff)
         self.assertFalse(user.is_superuser)
-        self.assertTrue(user.check_password("testpass123"))
+        self.assertTrue(user.check_password(TEST_PASSWORD))
         self.assertTrue(user.avatar)
 
     def test_create_superuser(self):
         admin = User.objects.create_superuser(
-            email="admin@example.com",
-            name="Admin",
-            surname="Adminov",
-            password="adminpass123",
+            email=ADMIN_EMAIL,
+            name=ADMIN_NAME,
+            surname=ADMIN_SURNAME,
+            password=ADMIN_PASSWORD,
         )
 
         self.assertTrue(admin.is_staff)
@@ -40,7 +72,7 @@ class UserModelTest(TestCase):
 
     def test_user_str(self):
         user = User.objects.create_user(**self.user_data)
-        expected = f"{user.name} {user.surname} ({user.email})"
+        expected = f"{TEST_NAME} {TEST_SURNAME} ({TEST_EMAIL})"
         self.assertEqual(str(user), expected)
 
     def test_email_unique(self):
@@ -48,7 +80,7 @@ class UserModelTest(TestCase):
 
         with self.assertRaises(Exception):
             User.objects.create_user(
-                email="test@example.com",
+                email=TEST_EMAIL,
                 name="Another",
                 surname="User",
                 password="pass123",
@@ -56,7 +88,7 @@ class UserModelTest(TestCase):
 
     def test_get_full_name(self):
         user = User.objects.create_user(**self.user_data)
-        self.assertEqual(user.get_full_name(), "Test User")
+        self.assertEqual(user.get_full_name(), f"{TEST_NAME} {TEST_SURNAME}")
 
     def test_avatar_generation(self):
         user = User.objects.create_user(**self.user_data)
@@ -68,16 +100,16 @@ class UserViewsTest(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(
-            email="user@example.com",
-            name="Test",
-            surname="User",
-            password="testpass123",
+            email=USER_EMAIL,
+            name=TEST_NAME,
+            surname=TEST_SURNAME,
+            password=USER_PASSWORD,
         )
         self.other_user = User.objects.create_user(
-            email="other@example.com",
+            email=OTHER_USER_EMAIL,
             name="Other",
             surname="User",
-            password="otherpass123",
+            password=OTHER_USER_PASSWORD,
         )
 
     def test_register_view_get(self):
@@ -89,27 +121,27 @@ class UserViewsTest(TestCase):
         response = self.client.post(
             reverse("users:register"),
             {
-                "email": "new@example.com",
+                "email": NEW_USER_EMAIL,
                 "name": "New",
                 "surname": "User",
-                "password": "newpass123",
+                "password": NEW_USER_PASSWORD,
             },
         )
         self.assertRedirects(response, reverse("projects:project_list"))
-        self.assertTrue(User.objects.filter(email="new@example.com").exists())
+        self.assertTrue(User.objects.filter(email=NEW_USER_EMAIL).exists())
 
     def test_register_view_post_invalid(self):
         response = self.client.post(
             reverse("users:register"),
             {
-                "email": "invalid-email",
+                "email": INVALID_EMAIL,
                 "name": "",
                 "surname": "",
                 "password": "123",
             },
         )
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(User.objects.filter(email="invalid-email").exists())
+        self.assertFalse(User.objects.filter(email=INVALID_EMAIL).exists())
 
     def test_login_view_get(self):
         response = self.client.get(reverse("users:login"))
@@ -120,8 +152,8 @@ class UserViewsTest(TestCase):
         response = self.client.post(
             reverse("users:login"),
             {
-                "email": "user@example.com",
-                "password": "testpass123",
+                "email": USER_EMAIL,
+                "password": USER_PASSWORD,
             },
         )
         self.assertRedirects(response, reverse("projects:project_list"))
@@ -130,27 +162,31 @@ class UserViewsTest(TestCase):
         response = self.client.post(
             reverse("users:login"),
             {
-                "email": "user@example.com",
-                "password": "wrongpass",
+                "email": USER_EMAIL,
+                "password": WRONG_PASSWORD,
             },
         )
         self.assertEqual(response.status_code, 200)
 
     def test_logout_view(self):
-        self.client.login(email="user@example.com", password="testpass123")
+        self.client.login(email=USER_EMAIL, password=USER_PASSWORD)
         response = self.client.get(reverse("users:logout"))
         self.assertRedirects(response, reverse("projects:project_list"))
 
     def test_user_detail_view(self):
-        response = self.client.get(reverse("users:user_detail", kwargs={"pk": self.user.pk}))
+        response = self.client.get(
+            reverse("users:user_detail", kwargs={"pk": self.user.pk})
+        )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "users/user-details.html")
         self.assertContains(response, self.user.name)
 
     def test_user_edit_view_owner(self):
-        self.client.login(email="user@example.com", password="testpass123")
+        self.client.login(email=USER_EMAIL, password=USER_PASSWORD)
 
-        response = self.client.get(reverse("users:user_edit", kwargs={"pk": self.user.pk}))
+        response = self.client.get(
+            reverse("users:user_edit", kwargs={"pk": self.user.pk})
+        )
         self.assertEqual(response.status_code, 200)
 
         response = self.client.post(
@@ -158,40 +194,39 @@ class UserViewsTest(TestCase):
             {
                 "name": "Updated",
                 "surname": "Name",
-                "phone": "+79001234567",
-                "github_url": "https://github.com/test",
+                "phone": VALID_PHONE,
+                "github_url": VALID_GITHUB_URL,
                 "about": "About me",
             },
         )
-        self.assertRedirects(response, reverse("users:user_detail", kwargs={"pk": self.user.pk}))
-
+        self.assertRedirects(
+            response, reverse("users:user_detail", kwargs={"pk": self.user.pk})
+        )
         self.user.refresh_from_db()
         self.assertEqual(self.user.name, "Updated")
 
     def test_user_edit_view_not_owner(self):
-        self.client.login(email="user@example.com", password="testpass123")
-
-        response = self.client.get(reverse("users:user_edit", kwargs={"pk": self.other_user.pk}))
+        self.client.login(email=USER_EMAIL, password=USER_PASSWORD)
+        response = self.client.get(
+            reverse("users:user_edit", kwargs={"pk": self.other_user.pk})
+        )
         self.assertEqual(response.status_code, 302)
 
     def test_user_edit_phone_validation(self):
-        self.client.login(email="user@example.com", password="testpass123")
+        self.client.login(email=USER_EMAIL, password=USER_PASSWORD)
         response = self.client.post(
             reverse("users:user_edit", kwargs={"pk": self.user.pk}),
             {
-                "name": "Test",
-                "surname": "User",
-                "phone": "12345",
+                "name": TEST_NAME,
+                "surname": TEST_SURNAME,
+                "phone": INVALID_PHONE,
             },
         )
         self.assertEqual(response.status_code, 200)
         form = response.context["form"]
         self.assertTrue(form.errors)
         self.assertIn("phone", form.errors)
-        self.assertIn(
-            "Номер телефона должен быть в формате +7XXXXXXXXXX или 8XXXXXXXXXX (11 цифр после префикса).",
-            form.errors["phone"],
-        )
+        self.assertIn(PHONE_ERROR_MESSAGE, form.errors["phone"])
 
     def test_user_list_view(self):
         response = self.client.get(reverse("users:user_list"))
@@ -205,33 +240,38 @@ class PasswordChangeTest(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(
-            email="user@example.com", name="Test", surname="User", password="oldpass123"
+            email=USER_EMAIL,
+            name=TEST_NAME,
+            surname=TEST_SURNAME,
+            password=OLD_PASSWORD,
         )
 
     def test_password_change_success(self):
-        self.client.login(email="user@example.com", password="oldpass123")
+        self.client.login(email=USER_EMAIL, password=OLD_PASSWORD)
 
         response = self.client.post(
             reverse("users:change_password", kwargs={"pk": self.user.pk}),
             {
-                "old_password": "oldpass123",
-                "new_password1": "newpass456",
-                "new_password2": "newpass456",
+                "old_password": OLD_PASSWORD,
+                "new_password1": NEW_PASSWORD,
+                "new_password2": NEW_PASSWORD,
             },
         )
-        self.assertRedirects(response, reverse("users:user_detail", kwargs={"pk": self.user.pk}))
+        self.assertRedirects(
+            response, reverse("users:user_detail", kwargs={"pk": self.user.pk})
+        )
         self.user.refresh_from_db()
-        self.assertTrue(self.user.check_password("newpass456"))
+        self.assertTrue(self.user.check_password(NEW_PASSWORD))
 
     def test_password_change_wrong_old(self):
-        self.client.login(email="user@example.com", password="oldpass123")
+        self.client.login(email=USER_EMAIL, password=OLD_PASSWORD)
 
         response = self.client.post(
             reverse("users:change_password", kwargs={"pk": self.user.pk}),
             {
-                "old_password": "wrongpass",
-                "new_password1": "newpass456",
-                "new_password2": "newpass456",
+                "old_password": WRONG_PASSWORD,
+                "new_password1": NEW_PASSWORD,
+                "new_password2": NEW_PASSWORD,
             },
         )
         self.assertEqual(response.status_code, 200)

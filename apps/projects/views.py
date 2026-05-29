@@ -1,28 +1,34 @@
-import json
-from django.shortcuts import redirect, get_object_or_404
+from http import HTTPStatus
+
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.http import Http404, JsonResponse
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views import View
-from django.views.generic import ListView, DetailView, CreateView, UpdateView
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.contrib import messages
-from django.http import JsonResponse, Http404
+from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
-from .models import Project, Skill
+from team_finder.utils import JsonRequestMixin
+
 from .forms import ProjectForm
+from .models import PROJECT_STATUS_CLOSED, Project, Skill
 
+PROJECTS_PER_PAGE = 12
+SKILLS_AUTOCOMPLETE_LIMIT = 10
 
-class JsonRequestMixin:
-    def get_json_data(self, request):
-        try:
-            return json.loads(request.body)
-        except (json.JSONDecodeError, AttributeError):
-            return {}
+ERROR_NO_PERMISSION = "Нет прав"
+ERROR_SKILL_NOT_FOUND = "Навык не найден"
+ERROR_NEED_SKILL_ID_OR_NAME = "Нужен skill_id или name"
+ERROR_SKILL_NOT_IN_PROJECT = "Навык не в проекте"
+ERROR_PROJECT_CLOSED = "Проект закрыт"
+ERROR_PROJECT_ALREADY_CLOSED = "Уже завершён"
+SUCCESS_SKILL_REMOVED = "ok"
 
 
 class ProjectListView(ListView):
     model = Project
     template_name = "projects/project_list.html"
-    paginate_by = 12
+    paginate_by = PROJECTS_PER_PAGE
     ordering = ["-created_at"]
 
     def get_queryset(self):
@@ -34,7 +40,9 @@ class ProjectListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["all_skills"] = Skill.objects.values_list("name", flat=True).order_by("name")
+        context["all_skills"] = (
+            Skill.objects.values_list("name", flat=True).order_by("name")
+        )
         context["active_skill"] = self.request.GET.get("skill", "")
         context["query_prefix"] = (
             f"skill={context['active_skill']}&" if context["active_skill"] else ""
@@ -78,7 +86,9 @@ class ProjectUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return self.request.user == self.get_object().owner
 
     def handle_no_permission(self):
-        messages.error(self.request, "У вас нет прав для редактирования этого проекта.")
+        messages.error(
+            self.request, "У вас нет прав для редактирования этого проекта."
+        )
         return redirect("projects:project_detail", pk=self.get_object().pk)
 
     def get_context_data(self, **kwargs):
@@ -97,9 +107,13 @@ class SkillAutocompleteView(View):
         if not query:
             return JsonResponse([], safe=False)
 
-        skills = Skill.objects.filter(name__istartswith=query).order_by("name")[:10]
-
-        return JsonResponse([{"id": s.id, "name": s.name} for s in skills], safe=False)
+        skills = (
+            Skill.objects.filter(name__istartswith=query)
+            .order_by("name")[:SKILLS_AUTOCOMPLETE_LIMIT]
+        )
+        return JsonResponse(
+            [{"id": s.id, "name": s.name} for s in skills], safe=False
+        )
 
 
 class AddSkillToProjectView(LoginRequiredMixin, JsonRequestMixin, View):
@@ -107,37 +121,47 @@ class AddSkillToProjectView(LoginRequiredMixin, JsonRequestMixin, View):
         project = get_object_or_404(Project, pk=pk)
 
         if request.user != project.owner:
-            return JsonResponse({"error": "Нет прав"}, status=403)
+            return JsonResponse(
+                {"error": ERROR_NO_PERMISSION},
+                status=HTTPStatus.FORBIDDEN,
+            )
 
         data = self.get_json_data(request)
         skill_id = data.get("skill_id")
         name = data.get("name")
 
-        try:
-            if skill_id:
+        if skill_id:
+            try:
                 skill = get_object_or_404(Skill, pk=skill_id)
-                created = False
-            elif name:
-                skill, created = Skill.objects.get_or_create(name=name.strip())
-            else:
-                return JsonResponse({"error": "Нужен skill_id или name"}, status=400)
-            response_data = {
-                "id": skill.id,
-                "skill_id": skill.id,
-                "name": skill.name,
-                "created": created,
-                "added": not project.skills.filter(id=skill.id).exists(),
-            }
+            except Http404:
+                return JsonResponse(
+                    {"error": ERROR_SKILL_NOT_FOUND},
+                    status=HTTPStatus.NOT_FOUND,
+                )
+            created = False
+        elif name:
+            skill, created = Skill.objects.get_or_create(name=name.strip())
+        else:
+            return JsonResponse(
+                {"error": ERROR_NEED_SKILL_ID_OR_NAME},
+                status=HTTPStatus.BAD_REQUEST,
+            )
 
-            if not response_data["added"]:
-                return JsonResponse(response_data)
+        already_added = project.skills.filter(id=skill.id).exists()
 
+        response_data = {
+            "id": skill.id,
+            "skill_id": skill.id,
+            "name": skill.name,
+            "created": created,
+            "added": not already_added,
+        }
+
+        if not already_added:
             project.skills.add(skill)
             response_data["added"] = True
-            return JsonResponse(response_data)
 
-        except Http404:
-            return JsonResponse({"error": "Навык не найден"}, status=404)
+        return JsonResponse(response_data)
 
 
 class RemoveSkillFromProjectView(LoginRequiredMixin, View):
@@ -146,13 +170,19 @@ class RemoveSkillFromProjectView(LoginRequiredMixin, View):
         skill = get_object_or_404(Skill, pk=skill_pk)
 
         if request.user != project.owner:
-            return JsonResponse({"error": "Нет прав"}, status=403)
+            return JsonResponse(
+                {"error": ERROR_NO_PERMISSION},
+                status=HTTPStatus.FORBIDDEN,
+            )
 
         if not project.skills.filter(id=skill.id).exists():
-            return JsonResponse({"error": "Навык не в проекте"}, status=400)
+            return JsonResponse(
+                {"error": ERROR_SKILL_NOT_IN_PROJECT},
+                status=HTTPStatus.BAD_REQUEST,
+            )
 
         project.skills.remove(skill)
-        return JsonResponse({"status": "ok"})
+        return JsonResponse({"status": SUCCESS_SKILL_REMOVED})
 
 
 class ToggleParticipateView(LoginRequiredMixin, View):
@@ -160,16 +190,22 @@ class ToggleParticipateView(LoginRequiredMixin, View):
         project = get_object_or_404(Project, pk=pk)
 
         if not project.is_open:
-            return JsonResponse({"status": "error", "message": "Проект закрыт"}, status=400)
+            return JsonResponse(
+                {"status": "error", "message": ERROR_PROJECT_CLOSED},
+                status=HTTPStatus.BAD_REQUEST,
+            )
 
-        if project.participants.filter(id=request.user.id).exists():
+        is_participant = project.participants.filter(id=request.user.id).exists()
+
+        if is_participant:
             project.participants.remove(request.user)
-            participating = False
         else:
             project.participants.add(request.user)
-            participating = True
 
-        return JsonResponse({"status": "ok", "participant": participating})
+        return JsonResponse({
+            "status": "ok",
+            "participant": not is_participant,
+        })
 
 
 class CompleteProjectView(LoginRequiredMixin, View):
@@ -177,11 +213,20 @@ class CompleteProjectView(LoginRequiredMixin, View):
         project = get_object_or_404(Project, pk=pk)
 
         if request.user != project.owner:
-            return JsonResponse({"status": "error"}, status=403)
+            return JsonResponse(
+                {"status": "error"},
+                status=HTTPStatus.FORBIDDEN,
+            )
 
         if not project.is_open:
-            return JsonResponse({"status": "error", "message": "Уже завершён"}, status=400)
+            return JsonResponse(
+                {"status": "error", "message": ERROR_PROJECT_ALREADY_CLOSED},
+                status=HTTPStatus.BAD_REQUEST,
+            )
 
-        project.status = "closed"
+        project.status = PROJECT_STATUS_CLOSED
         project.save()
-        return JsonResponse({"status": "ok", "project_status": "closed"})
+        return JsonResponse({
+            "status": "ok",
+            "project_status": PROJECT_STATUS_CLOSED,
+        })
