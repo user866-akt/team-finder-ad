@@ -27,9 +27,7 @@ class Migration(migrations.Migration):
                 ("password", models.CharField(max_length=128, verbose_name="password")),
                 (
                     "last_login",
-                    models.DateTimeField(
-                        blank=True, null=True, verbose_name="last login"
-                    ),
+                    models.DateTimeField(blank=True, null=True, verbose_name="last login"),
                 ),
                 (
                     "is_superuser",
@@ -42,9 +40,7 @@ class Migration(migrations.Migration):
                 (
                     "email",
                     models.EmailField(
-                        error_messages={
-                            "unique": "Пользователь с таким email уже существует."
-                        },
+                        error_messages={"unique": "Пользователь с таким email уже существует."},
                         max_length=255,
                         unique=True,
                         verbose_name="Email адрес",
@@ -71,15 +67,11 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "github_url",
-                    models.URLField(
-                        blank=True, default="", verbose_name="Ссылка на GitHub"
-                    ),
+                    models.URLField(blank=True, default="", verbose_name="Ссылка на GitHub"),
                 ),
                 (
                     "about",
-                    models.TextField(
-                        blank=True, default="", max_length=256, verbose_name="О себе"
-                    ),
+                    models.TextField(blank=True, default="", max_length=256, verbose_name="О себе"),
                 ),
                 (
                     "is_active",

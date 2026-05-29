@@ -28,9 +28,7 @@ class Project(models.Model):
     ]
 
     name = models.CharField(verbose_name="Название проекта", max_length=200)
-    description = models.TextField(
-        verbose_name="Описание проекта", blank=True, default=""
-    )
+    description = models.TextField(verbose_name="Описание проекта", blank=True, default="")
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

@@ -23,15 +23,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     avatar = models.ImageField(
         verbose_name="Аватар", upload_to="avatars/", default="images/default_avatar.png"
     )
-    phone = models.CharField(
-        verbose_name="Номер телефона", max_length=12, blank=True, default=""
-    )
+    phone = models.CharField(verbose_name="Номер телефона", max_length=12, blank=True, default="")
     github_url = models.URLField(
         verbose_name="Ссылка на GitHub", max_length=200, blank=True, default=""
     )
-    about = models.TextField(
-        verbose_name="О себе", max_length=256, blank=True, default=""
-    )
+    about = models.TextField(verbose_name="О себе", max_length=256, blank=True, default="")
     is_active = models.BooleanField(
         verbose_name="Активный",
         default=True,
@@ -40,9 +36,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name="Администратор",
         default=False,
     )
-    date_joined = models.DateTimeField(
-        verbose_name="Дата регистрации", default=timezone.now
-    )
+    date_joined = models.DateTimeField(verbose_name="Дата регистрации", default=timezone.now)
 
     objects = CustomUserManager()
 
@@ -65,11 +59,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def save(self, *args, **kwargs):
         is_new = self.pk is None
-        if (
-            is_new
-            and not self.avatar
-            or self.avatar.name == "images/default_avatar.png"
-        ):
+        if is_new and not self.avatar or self.avatar.name == "images/default_avatar.png":
             self.avatar = self._generate_default_avatar()
 
         super().save(*args, **kwargs)

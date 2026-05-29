@@ -10,9 +10,7 @@ urlpatterns = [
     path("<int:pk>/edit/", views.ProjectUpdateView.as_view(), name="project_edit"),
     path("<int:pk>/", views.ProjectDetailView.as_view(), name="project_detail"),
     path("skills/", views.SkillAutocompleteView.as_view(), name="skill_autocomplete"),
-    path(
-        "<int:pk>/skills/add/", views.AddSkillToProjectView.as_view(), name="add_skill"
-    ),
+    path("<int:pk>/skills/add/", views.AddSkillToProjectView.as_view(), name="add_skill"),
     path(
         "<int:pk>/skills/<int:skill_pk>/remove/",
         views.RemoveSkillFromProjectView.as_view(),

@@ -34,9 +34,7 @@ class ProjectListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["all_skills"] = Skill.objects.values_list("name", flat=True).order_by(
-            "name"
-        )
+        context["all_skills"] = Skill.objects.values_list("name", flat=True).order_by("name")
         context["active_skill"] = self.request.GET.get("skill", "")
         context["query_prefix"] = (
             f"skill={context['active_skill']}&" if context["active_skill"] else ""
@@ -162,9 +160,7 @@ class ToggleParticipateView(LoginRequiredMixin, View):
         project = get_object_or_404(Project, pk=pk)
 
         if not project.is_open:
-            return JsonResponse(
-                {"status": "error", "message": "Проект закрыт"}, status=400
-            )
+            return JsonResponse({"status": "error", "message": "Проект закрыт"}, status=400)
 
         if project.participants.filter(id=request.user.id).exists():
             project.participants.remove(request.user)
@@ -184,9 +180,7 @@ class CompleteProjectView(LoginRequiredMixin, View):
             return JsonResponse({"status": "error"}, status=403)
 
         if not project.is_open:
-            return JsonResponse(
-                {"status": "error", "message": "Уже завершён"}, status=400
-            )
+            return JsonResponse({"status": "error", "message": "Уже завершён"}, status=400)
 
         project.status = "closed"
         project.save()

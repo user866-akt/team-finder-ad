@@ -146,9 +146,7 @@ class ProjectViewsTest(TestCase):
     def test_project_edit_owner(self):
         self.client.login(email="owner@example.com", password="ownerpass123")
 
-        response = self.client.get(
-            reverse("projects:project_edit", kwargs={"pk": self.project.pk})
-        )
+        response = self.client.get(reverse("projects:project_edit", kwargs={"pk": self.project.pk}))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["is_edit"])
 
@@ -170,9 +168,7 @@ class ProjectViewsTest(TestCase):
     def test_project_edit_not_owner(self):
         self.client.login(email="other@example.com", password="otherpass123")
 
-        response = self.client.get(
-            reverse("projects:project_edit", kwargs={"pk": self.project.pk})
-        )
+        response = self.client.get(reverse("projects:project_edit", kwargs={"pk": self.project.pk}))
         self.assertEqual(response.status_code, 302)
 
 

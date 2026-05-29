@@ -24,15 +24,9 @@ class RegisterForm(forms.ModelForm):
         model = User
         fields = ["name", "surname", "email", "password"]
         widgets = {
-            "name": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Имя"}
-            ),
-            "surname": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Фамилия"}
-            ),
-            "email": forms.EmailInput(
-                attrs={"class": "form-control", "placeholder": "Email"}
-            ),
+            "name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Имя"}),
+            "surname": forms.TextInput(attrs={"class": "form-control", "placeholder": "Фамилия"}),
+            "email": forms.EmailInput(attrs={"class": "form-control", "placeholder": "Email"}),
         }
 
     def clean_email(self):
@@ -52,9 +46,7 @@ class RegisterForm(forms.ModelForm):
 class LoginForm(forms.Form):
     email = forms.EmailField(
         label="Email",
-        widget=forms.EmailInput(
-            attrs={"class": "form-control", "placeholder": "Введите email"}
-        ),
+        widget=forms.EmailInput(attrs={"class": "form-control", "placeholder": "Введите email"}),
     )
     password = forms.CharField(
         label="Пароль",
@@ -95,12 +87,8 @@ class UserEditForm(forms.ModelForm):
         model = User
         fields = ["name", "surname", "avatar", "about", "phone", "github_url"]
         widgets = {
-            "name": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Имя"}
-            ),
-            "surname": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Фамилия"}
-            ),
+            "name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Имя"}),
+            "surname": forms.TextInput(attrs={"class": "form-control", "placeholder": "Фамилия"}),
             "avatar": forms.FileInput(attrs={"class": "form-control"}),
             "about": forms.Textarea(
                 attrs={
@@ -141,17 +129,13 @@ class UserEditForm(forms.ModelForm):
 
         instance = self.instance
         normalized_8 = "8" + phone[2:]
-        existing_users = User.objects.filter(
-            models.Q(phone=phone) | models.Q(phone=normalized_8)
-        )
+        existing_users = User.objects.filter(models.Q(phone=phone) | models.Q(phone=normalized_8))
 
         if instance and instance.pk:
             existing_users = existing_users.exclude(pk=instance.pk)
 
         if existing_users.exists():
-            raise ValidationError(
-                "Пользователь с таким номером телефона уже существует."
-            )
+            raise ValidationError("Пользователь с таким номером телефона уже существует.")
 
         return phone
 

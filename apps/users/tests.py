@@ -142,9 +142,7 @@ class UserViewsTest(TestCase):
         self.assertRedirects(response, reverse("projects:project_list"))
 
     def test_user_detail_view(self):
-        response = self.client.get(
-            reverse("users:user_detail", kwargs={"pk": self.user.pk})
-        )
+        response = self.client.get(reverse("users:user_detail", kwargs={"pk": self.user.pk}))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "users/user-details.html")
         self.assertContains(response, self.user.name)
@@ -152,9 +150,7 @@ class UserViewsTest(TestCase):
     def test_user_edit_view_owner(self):
         self.client.login(email="user@example.com", password="testpass123")
 
-        response = self.client.get(
-            reverse("users:user_edit", kwargs={"pk": self.user.pk})
-        )
+        response = self.client.get(reverse("users:user_edit", kwargs={"pk": self.user.pk}))
         self.assertEqual(response.status_code, 200)
 
         response = self.client.post(
@@ -167,9 +163,7 @@ class UserViewsTest(TestCase):
                 "about": "About me",
             },
         )
-        self.assertRedirects(
-            response, reverse("users:user_detail", kwargs={"pk": self.user.pk})
-        )
+        self.assertRedirects(response, reverse("users:user_detail", kwargs={"pk": self.user.pk}))
 
         self.user.refresh_from_db()
         self.assertEqual(self.user.name, "Updated")
@@ -177,9 +171,7 @@ class UserViewsTest(TestCase):
     def test_user_edit_view_not_owner(self):
         self.client.login(email="user@example.com", password="testpass123")
 
-        response = self.client.get(
-            reverse("users:user_edit", kwargs={"pk": self.other_user.pk})
-        )
+        response = self.client.get(reverse("users:user_edit", kwargs={"pk": self.other_user.pk}))
         self.assertEqual(response.status_code, 302)
 
     def test_user_edit_phone_validation(self):
@@ -227,9 +219,7 @@ class PasswordChangeTest(TestCase):
                 "new_password2": "newpass456",
             },
         )
-        self.assertRedirects(
-            response, reverse("users:user_detail", kwargs={"pk": self.user.pk})
-        )
+        self.assertRedirects(response, reverse("users:user_detail", kwargs={"pk": self.user.pk}))
         self.user.refresh_from_db()
         self.assertTrue(self.user.check_password("newpass456"))
 

@@ -28,9 +28,7 @@ class Migration(migrations.Migration):
                 (
                     "name",
                     models.CharField(
-                        error_messages={
-                            "unique": "Навык с таким названием уже существует."
-                        },
+                        error_messages={"unique": "Навык с таким названием уже существует."},
                         max_length=124,
                         unique=True,
                         verbose_name="Название навыка",
@@ -61,21 +59,15 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "description",
-                    models.TextField(
-                        blank=True, default="", verbose_name="Описание проекта"
-                    ),
+                    models.TextField(blank=True, default="", verbose_name="Описание проекта"),
                 ),
                 (
                     "created_at",
-                    models.DateTimeField(
-                        auto_now_add=True, verbose_name="Дата создания"
-                    ),
+                    models.DateTimeField(auto_now_add=True, verbose_name="Дата создания"),
                 ),
                 (
                     "github_url",
-                    models.URLField(
-                        blank=True, default="", verbose_name="Ссылка на GitHub"
-                    ),
+                    models.URLField(blank=True, default="", verbose_name="Ссылка на GitHub"),
                 ),
                 (
                     "status",
