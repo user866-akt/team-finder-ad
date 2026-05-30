@@ -2,8 +2,8 @@ from http import HTTPStatus
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.http import Http404, JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.http import JsonResponse
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
@@ -12,12 +12,12 @@ from team_finder.utils import JsonRequestMixin
 
 from .forms import ProjectForm
 from .models import PROJECT_STATUS_CLOSED, Project, Skill
+from .utils import get_project_or_json, get_skill_or_json
 
 PROJECTS_PER_PAGE = 12
 SKILLS_AUTOCOMPLETE_LIMIT = 10
 
 ERROR_NO_PERMISSION = "Нет прав"
-ERROR_SKILL_NOT_FOUND = "Навык не найден"
 ERROR_NEED_SKILL_ID_OR_NAME = "Нужен skill_id или name"
 ERROR_SKILL_NOT_IN_PROJECT = "Навык не в проекте"
 ERROR_PROJECT_CLOSED = "Проект закрыт"
@@ -118,7 +118,9 @@ class SkillAutocompleteView(View):
 
 class AddSkillToProjectView(LoginRequiredMixin, JsonRequestMixin, View):
     def post(self, request, pk):
-        project = get_object_or_404(Project, pk=pk)
+        project, error = get_project_or_json(pk)
+        if error:
+            return error
 
         if request.user != project.owner:
             return JsonResponse(
@@ -131,13 +133,9 @@ class AddSkillToProjectView(LoginRequiredMixin, JsonRequestMixin, View):
         name = data.get("name")
 
         if skill_id:
-            try:
-                skill = get_object_or_404(Skill, pk=skill_id)
-            except Http404:
-                return JsonResponse(
-                    {"error": ERROR_SKILL_NOT_FOUND},
-                    status=HTTPStatus.NOT_FOUND,
-                )
+            skill, error = get_skill_or_json(skill_id)
+            if error:
+                return error
             created = False
         elif name:
             skill, created = Skill.objects.get_or_create(name=name.strip())
@@ -166,8 +164,13 @@ class AddSkillToProjectView(LoginRequiredMixin, JsonRequestMixin, View):
 
 class RemoveSkillFromProjectView(LoginRequiredMixin, View):
     def post(self, request, pk, skill_pk):
-        project = get_object_or_404(Project, pk=pk)
-        skill = get_object_or_404(Skill, pk=skill_pk)
+        project, error = get_project_or_json(pk)
+        if error:
+            return error
+
+        skill, error = get_skill_or_json(skill_pk)
+        if error:
+            return error
 
         if request.user != project.owner:
             return JsonResponse(
@@ -187,7 +190,9 @@ class RemoveSkillFromProjectView(LoginRequiredMixin, View):
 
 class ToggleParticipateView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        project = get_object_or_404(Project, pk=pk)
+        project, error = get_project_or_json(pk)
+        if error:
+            return error
 
         if not project.is_open:
             return JsonResponse(
@@ -210,7 +215,9 @@ class ToggleParticipateView(LoginRequiredMixin, View):
 
 class CompleteProjectView(LoginRequiredMixin, View):
     def post(self, request, pk):
-        project = get_object_or_404(Project, pk=pk)
+        project, error = get_project_or_json(pk)
+        if error:
+            return error
 
         if request.user != project.owner:
             return JsonResponse(
