@@ -1,9 +1,9 @@
 from pathlib import Path
-from decouple import Config, RepositoryEnv
+from decouple import AutoConfig
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-config = Config(RepositoryEnv(BASE_DIR / ".env"))
+config = AutoConfig(search_path=BASE_DIR)
 
 SECRET_KEY = config("DJANGO_SECRET_KEY")
 
@@ -107,7 +107,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 # Media files
