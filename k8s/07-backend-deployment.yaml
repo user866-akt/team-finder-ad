@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: team-finder
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: amirkhubeev/team-finder-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: team-finder-config
+            - configMapRef:
+                name: postgres-config
+            - secretRef:
+                name: team-finder-secret
+          command: ["sh", "-c"]
+          args:
+            - |
+              python manage.py migrate &&
+              python manage.py create_test_data &&
+              python manage.py collectstatic --noinput &&
+              exec gunicorn team_finder.wsgi:application --bind 0.0.0.0:8000 --workers 3
+          readinessProbe:
+            httpGet:
+              path: /admin/login/
+              port: 8000
+              httpHeaders:
+                - name: Host
+                  value: localhost
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /admin/login/
+              port: 8000
+              httpHeaders:
+                - name: Host
+                  value: localhost
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: static-volume
+              mountPath: /app/staticfiles
+            - name: media-volume
+              mountPath: /app/media
+      volumes:
+        - name: static-volume
+          persistentVolumeClaim:
+            claimName: static-pvc
+        - name: media-volume
+          persistentVolumeClaim:
+            claimName: media-pvc

@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: team-finder
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: nginx-conf
+              mountPath: /etc/nginx/conf.d
+            - name: static-volume
+              mountPath: /static
+              readOnly: true
+            - name: media-volume
+              mountPath: /media
+              readOnly: true
+      volumes:
+        - name: nginx-conf
+          configMap:
+            name: nginx-conf
+        - name: static-volume
+          persistentVolumeClaim:
+            claimName: static-pvc
+        - name: media-volume
+          persistentVolumeClaim:
+            claimName: media-pvc
