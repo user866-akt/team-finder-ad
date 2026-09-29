@@ -22,6 +22,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: team-finder-config
+            - configMapRef:
+                name: postgres-config
             - secretRef:
                 name: team-finder-secret
           command: ["sh", "-c"]

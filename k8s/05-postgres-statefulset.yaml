@@ -20,12 +20,10 @@ spec:
           ports:
             - containerPort: 5432
               name: postgres
+          envFrom:
+            - configMapRef:
+                name: postgres-config
           env:
-            - name: POSTGRES_DB
-              valueFrom:
-                configMapKeyRef:
-                  name: team-finder-config
-                  key: POSTGRES_DB
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
