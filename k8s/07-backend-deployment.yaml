@@ -13,10 +13,14 @@ spec:
       labels:
         app: backend
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
       containers:
         - name: backend
           image: amirkhubeev/team-finder-backend:latest
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
           envFrom:
@@ -26,6 +30,13 @@ spec:
                 name: postgres-config
             - secretRef:
                 name: team-finder-secret
+          env:
+            - name: HOME
+              value: /tmp
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           command: ["sh", "-c"]
           args:
             - |
@@ -60,6 +71,8 @@ spec:
               mountPath: /app/staticfiles
             - name: media-volume
               mountPath: /app/media
+            - name: tmp-volume
+              mountPath: /tmp
       volumes:
         - name: static-volume
           persistentVolumeClaim:
@@ -67,3 +80,5 @@ spec:
         - name: media-volume
           persistentVolumeClaim:
             claimName: media-pvc
+        - name: tmp-volume
+          emptyDir: {}

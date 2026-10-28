@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pod-watcher
+  namespace: team-finder
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pod-watcher
+  template:
+    metadata:
+      labels:
+        app: pod-watcher
+    spec:
+      serviceAccountName: pod-watcher
+      containers:
+        - name: pod-watcher
+          image: python:3.12-slim
+          command: ["sh", "-c"]
+          args:
+            - |
+              pip install --no-cache-dir requests kubernetes &&
+              cd /app &&
+              python main.py
+          env:
+            - name: NTFY_TOPIC
+              valueFrom:
+                secretKeyRef:
+                  name: ntfy
+                  key: topic
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: scripts
+              mountPath: /app
+      volumes:
+        - name: scripts
+          configMap:
+            name: pod-watcher-scripts
